@@ -6,11 +6,13 @@ int main( int argc, char **argv )
 		std::cerr << "One Argument required." << std::endl;
 		return ( 1 );
 	}
+
 	try {
-		ScalarConverter ScalarConverter( argv[1] );
+		ScalarConverter::convert( argv[ 1 ] );
 	}
 	catch( const ScalarConverter::ErrorException& e ) {
 		std::cerr << e.what() << std::endl;
 	}
+
 	return ( 0 );
 }
