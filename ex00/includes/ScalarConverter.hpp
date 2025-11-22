@@ -43,11 +43,11 @@ class ScalarConverter
 e_type checkInput(const std::string& str);
 void convertInput(void);
 
-void fromChar(void);
-void fromInt(void);
-void fromFloat(void);
-void fromDouble(void);
+void fromChar( e_type type, const std::string& str );
+void fromInt( e_type type, const std::string& str );
+void fromFloat( e_type type, const std::string& str );
+void fromDouble( e_type type, const std::string& str );
 
-void printOutput(void);
+void printOutput( e_type type, const std::string& str, char charVar, int intVar, float floatVar, double doubleVar );
 
 #endif

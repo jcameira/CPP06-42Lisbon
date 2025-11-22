@@ -3,6 +3,8 @@
         "iostream": "cpp",
         "string": "cpp",
         "cstring": "cpp",
-        "cctype": "cpp"
+        "cctype": "cpp",
+        "climits": "cpp",
+        "cstdlib": "cpp"
     }
 }

@@ -20,9 +20,9 @@ ScalarConverter &ScalarConverter::operator=( const ScalarConverter &src ) {
 }
 
 e_type	checkInput( const std::string& str ) {
-	if ( str.compare( "nan" ) == 0 || str.compare( "+inf" ) == 0 ||
-		str.compare( "-inf" ) == 0 || str.compare( "+inff" ) == 0 ||
-		str.compare( "-inff" ) == 0 ) {
+	if ( str.compare( "nan" ) == 0 || str.compare( "nanf" ) == 0 ||
+		str.compare( "+inf" ) == 0 || str.compare( "-inf" ) == 0 ||
+		str.compare( "+inff" ) == 0 || str.compare( "-inff" ) == 0 ) {
 		return ( NAN_INF );
 	}
 	else if ( str.length() == 1 &&
@@ -60,43 +60,71 @@ e_type	checkInput( const std::string& str ) {
 		return ( ERROR );
 }
 
-void fromChar( const ScalarConverter &src ) {
-	this->_char = static_cast< unsigned char >( this->getInput()[0] );
-	this->_int = static_cast< int >( this->getChar() );
-	this->_float = static_cast< float >( this->getChar() );
-	this->_double = static_cast< double >( this->getChar() );
+void fromChar( e_type type, const std::string &str ) {
+	char	charVar = str[0];
+	int		intVar;
+	float	floatVar;
+	double	doubleVar;
+
+	charVar = static_cast< unsigned char >( charVar );
+	intVar = static_cast< int >( charVar );
+	floatVar = static_cast< float >( charVar );
+	doubleVar = static_cast< double >( charVar );
+
+	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
 }
 
-void fromInt( const ScalarConverter &src ) {
-	this->_int = static_cast< int >( this->getDouble() );
-	this->_char = static_cast< unsigned char >( this->getInt() );
-	this->_float = static_cast< float >( this->getDouble() );
+void fromInt( e_type type, const std::string &str ) {
+	char	charVar;
+	int		intVar = std::atoi( str.c_str() );
+	float	floatVar;
+	double	doubleVar;
+
+	charVar = static_cast< int >( intVar );
+	floatVar = static_cast< unsigned char >( intVar );
+	doubleVar = static_cast< double >( intVar );
+
+	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
 }
 
-void fromFloat( const ScalarConverter &src ) {
-	this->_float = static_cast< float >( this->getDouble() );
-	this->_char = static_cast< char >( this->getFloat() );
-	this->_int = static_cast< int >( this->getFloat() );
+void fromFloat( e_type type, const std::string &str ) {
+	char	charVar;
+	int		intVar;
+	float	floatVar = std::atof( str.c_str() );
+	double	doubleVar;
+
+	charVar = static_cast< float >( floatVar );
+	intVar = static_cast< char >( floatVar );
+	doubleVar = static_cast< int >( floatVar );
+
+	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
 }
 
-void fromDouble( const ScalarConverter &src ) {
-	this->_char = static_cast< char >( this->getDouble() );
-	this->_int = static_cast< int >( this->getDouble() );
-	this->_float = static_cast< float >( this->getDouble() );
+void fromDouble( e_type type, const std::string &str ) {
+	char	charVar;
+	int		intVar;
+	float	floatVar;
+	double	doubleVar = std::atof( str.c_str() );
+
+	charVar = static_cast< char >( doubleVar );
+	intVar = static_cast< int >( doubleVar );
+	floatVar = static_cast< float >( doubleVar );
+
+	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
 }
 
 void	ScalarConverter::convert( const std::string &str ) {
-	void ( *functionPTRS[] )( void ) = { &fromChar, &fromInt, &fromFloat, &fromDouble };
+	void ( *functionPTRS[] )( e_type type, const std::string &str ) = { &fromChar, &fromInt, &fromFloat, &fromDouble };
 	int types[] = { CHAR, INT, FLOAT, DOUBLE };
 
 	e_type type = checkInput( str );
 
 	if ( type == NAN_INF )
-		return ;
+		printOutput( type, str, 0, 0, 0, 0 );
 	int i;
 	for ( i = 0; i < 4; i++ ) {
 		if ( type == types[ i ] ) {
-			( functionPTRS[ i ] )();
+			( functionPTRS[ i ] )( type, str );
 			break ;
 		}
 	}
@@ -104,42 +132,42 @@ void	ScalarConverter::convert( const std::string &str ) {
 		throw ScalarConverter::ErrorException();
 }
 
-void	ScalarConverter::printOutput( void )const {
-	if ( this->getType() != NAN_INF && this->getDouble() <= UCHAR_MAX && this->getDouble() >= 0 ) {
-		if ( isprint( this->getChar() ) )
-			std::cout << "char: '" << this->getChar() << "'" << std::endl;
+void	printOutput( e_type type, const std::string &str, char charVar, int intVar, float floatVar, double doubleVar ) {
+	if ( type != NAN_INF && doubleVar <= UCHAR_MAX && doubleVar >= 0 ) {
+		if ( isprint( charVar ) )
+			std::cout << "char: '" << charVar << "'" << std::endl;
 		else
 			std::cout << "char: Non displayable" << std::endl;
 	}
 	else
 		std::cout << "char: impossible" << std::endl;
 
-	if ( this->getType() != NAN_INF && this->getDouble() >= std::numeric_limits< int >::min() && this->getDouble() <= std::numeric_limits< int >::max() ) {
-		std::cout << "int: " << this->getInt() << std::endl;
+	if ( type != NAN_INF && doubleVar >= std::numeric_limits< int >::min() && doubleVar <= std::numeric_limits< int >::max() ) {
+		std::cout << "int: " << intVar << std::endl;
 	}
 	else
 		std::cout << "int: impossible" << std::endl;
 
-	if ( this->getType() != NAN_INF ) {
-		std::cout << "float: " << this->getFloat();
-		if ( this->getFloat() - this->getInt() == 0 )
+	if ( type != NAN_INF ) {
+		std::cout << "float: " << floatVar;
+		if ( floatVar - intVar == 0 )
 			std::cout << ".0f" << std::endl;
 		else
 			std::cout << "f" << std::endl;
 	}
 	else {
-		if ( this->getInput() == "nan" || this->getInput() == "nanf" )
+		if ( str == "nan" || str == "nanf" )
 			std::cout << "float: nanf" << std::endl;
-		else if ( this->getInput()[0] == '+' )
+		else if ( str[0] == '+' )
 			std::cout << "float: +inff" << std::endl;
 		else
 			std::cout << "float: -inff" << std::endl;
 	}
 
-	if ( this->getType() != NAN_INF ) {
-		std::cout << "double: " << this->getDouble();
-		if ( this->getDouble() < std::numeric_limits< int >::min() || this->getDouble() > std::numeric_limits< int >::max() ||
-			this->getDouble() - this->getInt() == 0 )
+	if ( type != NAN_INF ) {
+		std::cout << "double: " << doubleVar;
+		if ( doubleVar < std::numeric_limits< int >::min() || doubleVar > std::numeric_limits< int >::max() ||
+			doubleVar - intVar == 0 )
 	 {
 			std::cout << ".0" << std::endl;
 		}
@@ -147,9 +175,9 @@ void	ScalarConverter::printOutput( void )const {
 			std::cout << std::endl;
 	}
 	else {
-		if ( this->getInput() == "nan" || this->getInput() == "nanf" )
+		if ( str == "nan" || str == "nanf" )
 			std::cout << "double: nan" << std::endl;
-		else if ( this->getInput()[ 0 ] == '+' )
+		else if ( str[ 0 ] == '+' )
 			std::cout << "double: +inf" << std::endl;
 		else
 			std::cout << "double: -inf" << std::endl;
