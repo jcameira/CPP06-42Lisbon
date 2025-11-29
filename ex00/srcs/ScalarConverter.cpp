@@ -1,189 +1,188 @@
-#include <ScalarConverter.hpp>
+#include "ScalarConverter.hpp"
 
 ScalarConverter::ScalarConverter() {
 }
 
-ScalarConverter::ScalarConverter( const std::string input ) {
-	( void )input;
-}
-
-ScalarConverter::ScalarConverter( const ScalarConverter &src ) {
-	*this = src;
+ScalarConverter::ScalarConverter( const ScalarConverter &obj ) {
+	(void)obj;
 }
 
 ScalarConverter::~ScalarConverter() {
 }
 
-ScalarConverter &ScalarConverter::operator=( const ScalarConverter &src ) {
-	( void )src;
-	return ( *this );
+ScalarConverter &ScalarConverter::operator=( const ScalarConverter &obj ) {
+	(void)obj;
+	return *this;
 }
 
-e_type	checkInput( const std::string& str ) {
-	if ( str.compare( "nan" ) == 0 || str.compare( "nanf" ) == 0 ||
-		str.compare( "+inf" ) == 0 || str.compare( "-inf" ) == 0 ||
-		str.compare( "+inff" ) == 0 || str.compare( "-inff" ) == 0 ) {
-		return ( NAN_INF );
-	}
-	else if ( str.length() == 1 &&
-		( str[0] == '+' || str[0] == '-' ||
-		str[0] == 'f' || str[0] == '.' ) ) {
-		return ( CHAR );
-	}
-	else if ( str.find_first_of( "+-" ) != str.find_last_of( "+-" ) )
-		return ( ERROR );
-	else if ( str.find_first_not_of( "+-0123456789" ) == std::string::npos )
-		return (INT);
-	else if ( str.find_first_not_of( "+-0123456789." ) == std::string::npos ) {
-		if ( str.find_first_of( "." ) != str.find_last_of( "." ) ||
-			isdigit( str[ str.find_first_of( "." ) + 1 ] ) == false ||
-			str.find_first_of( "." ) == 0 )
-			return ( ERROR );
-		else
-			return ( DOUBLE );
-	}
-	else if (  str.find_first_not_of(  "+-0123456789.f"  ) == std::string::npos  ) {
-		if (  str.find_first_of(  "f"  ) != str.find_last_of(  "f"  ) ||
-			str.find_first_of(  "."  ) != str.find_last_of(  "."  ) ||
-			str.find_first_of(  "f"  ) - str.find_first_of(  "."  ) == 1 ||
-			str.find_first_of(  "."  ) == 0 ||
-			str[ str.find_first_of(  "f"  ) + 1 ] != '\0'  )
-			return (  ERROR  );
-		else
-			return (  FLOAT  );
-	}
-	else if ( ( str.length() == 1 && std::isprint( str[0] ) ) ||
-		( str.length() == 1 && std::isalpha( str[0] ) ) ) {
-		return ( CHAR );
-	}
-	else
-		return ( ERROR );
+static bool isPseudoLiteral( const std::string& str )
+{
+    return (
+        str == "nan" || str == "nanf" ||
+        str == "+inf" || str == "+inff" ||
+        str == "-inf" || str == "-inff"
+    );
 }
 
-void fromChar( e_type type, const std::string &str ) {
-	char	charVar = str[0];
-	int		intVar;
-	float	floatVar;
-	double	doubleVar;
+static bool isInt( const std::string& str )
+{
+    size_t i = 0;
+    if ( str[ i ] == '+' || str[ i ] == '-' )
+		i++;
 
-	charVar = static_cast< unsigned char >( charVar );
-	intVar = static_cast< int >( charVar );
-	floatVar = static_cast< float >( charVar );
-	doubleVar = static_cast< double >( charVar );
-
-	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
+    if ( i == str.size() )
+		return ( false );
+    for ( ; i < str.size(); i++ )
+        if ( !std::isdigit( str[ i ] ) )
+            return ( false );
+    return ( true );
 }
 
-void fromInt( e_type type, const std::string &str ) {
-	char	charVar;
-	int		intVar = std::atoi( str.c_str() );
-	float	floatVar;
-	double	doubleVar;
+static bool isFloat( const std::string& str )
+{
+    if ( str == "+inff" || str == "-inff" || str == "nanf" )
+        return ( true );
 
-	charVar = static_cast< int >( intVar );
-	floatVar = static_cast< unsigned char >( intVar );
-	doubleVar = static_cast< double >( intVar );
+    size_t i = 0;
+    bool dot = false;
 
-	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
+    if ( str[ i ] == '+' || str[ i ] == '-' )
+		i++;
+
+    if ( i == str.size() )
+		return ( false );
+
+    for ( ; i < str.size(); i++ )
+    {
+        if ( str[ i ] == '.' && !dot )
+            dot = true;
+        else if ( str[ i ] == 'f' && i == str.size() - 1 )
+            return ( dot );
+        else if ( !std::isdigit( str[ i ] ) )
+            return ( false );
+    }
+
+    return ( false );
 }
 
-void fromFloat( e_type type, const std::string &str ) {
-	char	charVar;
-	int		intVar;
-	float	floatVar = std::atof( str.c_str() );
-	double	doubleVar;
+static bool isDouble( const std::string& str )
+{
+    if ( str == "+inf" || str == "-inf" || str == "nan" )
+        return ( true );
 
-	charVar = static_cast< float >( floatVar );
-	intVar = static_cast< char >( floatVar );
-	doubleVar = static_cast< int >( floatVar );
+    size_t i = 0;
+    bool dot = false;
 
-	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
+    if ( str[ i ] == '+' || str[ i ] == '-' )
+		i++;
+
+    if ( i == str.size() )
+		return ( false );
+
+    for ( ; i < str.size(); i++ )
+    {
+        if ( str[ i ] == '.' && !dot )
+            dot = true;
+        else if ( !std::isdigit( str[ i ] ) )
+            return ( false );
+    }
+    return ( dot );
 }
 
-void fromDouble( e_type type, const std::string &str ) {
-	char	charVar;
-	int		intVar;
-	float	floatVar;
-	double	doubleVar = std::atof( str.c_str() );
-
-	charVar = static_cast< char >( doubleVar );
-	intVar = static_cast< int >( doubleVar );
-	floatVar = static_cast< float >( doubleVar );
-
-	printOutput( type, str, charVar, intVar, floatVar, doubleVar );
+static void  printChar( double value )
+{
+    std::cout << "char: ";
+    if ( value != value || value < 0 || value > 127 )
+        std::cout << "impossible" << std::endl;
+    else if ( !std::isprint( static_cast< int >( value ) ) )
+        std::cout << "Non displayable" << std::endl;
+    else
+        std::cout << "'" << static_cast< char >( value ) << "'" << std::endl;
 }
 
-void	ScalarConverter::convert( const std::string &str ) {
-	void ( *functionPTRS[] )( e_type type, const std::string &str ) = { &fromChar, &fromInt, &fromFloat, &fromDouble };
-	int types[] = { CHAR, INT, FLOAT, DOUBLE };
-
-	e_type type = checkInput( str );
-
-	if ( type == NAN_INF )
-		printOutput( type, str, 0, 0, 0, 0 );
-	int i;
-	for ( i = 0; i < 4; i++ ) {
-		if ( type == types[ i ] ) {
-			( functionPTRS[ i ] )( type, str );
-			break ;
-		}
-	}
-	if ( i == 4 )
-		throw ScalarConverter::ErrorException();
+static void printInt( double value )
+{
+    std::cout << "int: ";
+    if ( value != value ||
+        value < std::numeric_limits< int >::min() ||
+        value > std::numeric_limits< int >::max() )
+        std::cout << "impossible" << std::endl; 
+    else
+        std::cout << static_cast< int >( value ) << std::endl;
 }
 
-void	printOutput( e_type type, const std::string &str, char charVar, int intVar, float floatVar, double doubleVar ) {
-	if ( type != NAN_INF && doubleVar <= UCHAR_MAX && doubleVar >= 0 ) {
-		if ( isprint( charVar ) )
-			std::cout << "char: '" << charVar << "'" << std::endl;
-		else
-			std::cout << "char: Non displayable" << std::endl;
-	}
-	else
-		std::cout << "char: impossible" << std::endl;
+static void printFloat( double value )
+{
+    std::cout << "float: ";
+    float valuef = static_cast< float >( value );
 
-	if ( type != NAN_INF && doubleVar >= std::numeric_limits< int >::min() && doubleVar <= std::numeric_limits< int >::max() ) {
-		std::cout << "int: " << intVar << std::endl;
-	}
-	else
-		std::cout << "int: impossible" << std::endl;
-
-	if ( type != NAN_INF ) {
-		std::cout << "float: " << floatVar;
-		if ( floatVar - intVar == 0 )
-			std::cout << ".0f" << std::endl;
-		else
-			std::cout << "f" << std::endl;
-	}
-	else {
-		if ( str == "nan" || str == "nanf" )
-			std::cout << "float: nanf" << std::endl;
-		else if ( str[0] == '+' )
-			std::cout << "float: +inff" << std::endl;
-		else
-			std::cout << "float: -inff" << std::endl;
-	}
-
-	if ( type != NAN_INF ) {
-		std::cout << "double: " << doubleVar;
-		if ( doubleVar < std::numeric_limits< int >::min() || doubleVar > std::numeric_limits< int >::max() ||
-			doubleVar - intVar == 0 )
-	 {
-			std::cout << ".0" << std::endl;
-		}
-		else
-			std::cout << std::endl;
-	}
-	else {
-		if ( str == "nan" || str == "nanf" )
-			std::cout << "double: nan" << std::endl;
-		else if ( str[ 0 ] == '+' )
-			std::cout << "double: +inf" << std::endl;
-		else
-			std::cout << "double: -inf" << std::endl;
-	}
+    if ( value != value )
+        std::cout << "nanf" << std::endl;
+    else if ( value == std::numeric_limits< double >::infinity() )
+        std::cout << "+inff" << std::endl;
+    else if ( value == -std::numeric_limits< double >::infinity() )
+        std::cout << "-inff" << std::endl;
+    else
+    {
+        std::cout << valuef;
+        if ( valuef == static_cast< int >( valuef ) )
+            std::cout << ".0";
+        std::cout << "f" << std::endl;
+    }
 }
 
-const char *ScalarConverter::ErrorException::what( void ) const throw() {
-	return ( "Error: Impossible to print or input not convertable" );
-};
+static void printDouble( double value )
+{
+    std::cout << "double: ";
+    if ( value != value )
+        std::cout << "nan" << std::endl;
+    else if ( value == std::numeric_limits<double>::infinity() )
+        std::cout << "+inf" << std::endl;
+    else if ( value == -std::numeric_limits<double>::infinity() )
+        std::cout << "-inf" << std::endl;
+    else
+    {
+        std::cout << value;
+        if ( value == static_cast< int >( value ) )
+            std::cout << ".0";
+        std::cout << std::endl;
+    }
+}
+
+void ScalarConverter::convert( const std::string& str )
+{
+    double value = 0.0;
+
+    if ( isPseudoLiteral( str ) )
+    {
+        if ( str[ 0 ] == '+' ) 
+			value = std::numeric_limits< double >::infinity();
+        else if ( str[ 0 ] == '-' ) 
+			value = -std::numeric_limits< double >::infinity();
+        else 
+			value = std::numeric_limits< double >::quiet_NaN();
+    }
+    else if ( str.size() == 1 && std::isprint( str[ 0 ] ) && !std::isdigit( str[ 0 ] ) )
+        value = static_cast< double >( str[ 0 ] );
+    else if ( isInt( str ) )
+        value = std::strtol( str.c_str(), NULL, 10 );
+    else if ( isFloat( str ) )
+        value = std::strtod( str.c_str(), NULL );
+    else if ( isDouble( str ) )
+        value = std::strtod( str.c_str(), NULL );
+    else
+    {
+        std::cout << "Error: invalid input" << std::endl;
+        return;
+    }
+
+    printChar( value );
+    printInt( value );
+    printFloat( value );
+    printDouble( value );
+}
+
+const char *ScalarConverter::ErrorException::what() const throw()
+{
+    return "Error: impossible to convert";
+}
