@@ -25,7 +25,12 @@ int main()
 				"\n\taddress next: " << ptr2->next <<
 	std::endl << std::endl;
 
-	Data *reserialized_struct = Serializer::deserialize(Serializer::serialize(ptr));
+	uintptr_t serialized_struct = Serializer::serialize( ptr );
+
+	std::cout << "Here is the serialized struct: " << serialized_struct <<
+	std::endl << std::endl;
+
+	Data *reserialized_struct = Serializer::deserialize( serialized_struct );
 
 	std::cout << "Here is the reserialized structs:" <<
 				"\n\taddress: " << reserialized_struct <<
@@ -39,8 +44,8 @@ int main()
 				"\n\taddress next: " << ptr2->next <<
 	std::endl << std::endl;
 
-	delete ptr2;
-	delete ptr;
+	delete ( ptr2 );
+	delete ( ptr );
 
-	return (0);
+	return ( 0 );
 }
