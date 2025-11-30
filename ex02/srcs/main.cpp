@@ -11,15 +11,12 @@ static Base *generate( void )
 	switch ( rand() % 3 ) {
 	case 0:
 		return ( new A() );
-		break;
 	case 1:
 		return ( new B() );
-		break;
 	case 2:
 		return ( new C() );
-		break;
 	default:
-		perror( "Something went wrong with the random generator" );
+		std::cerr << "Error: Something went wrong with the random generator" << std::endl;
 		return ( NULL );
 	}
 }
